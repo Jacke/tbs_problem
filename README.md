@@ -1,3 +1,97 @@
+## TBS Prolem Çözümü
+
+Uygulamanın kodunu 2 ayrı dosya kullanarak çözdüm asıl çözüm algoritmasının olduğu `main.jl` ve sık kullanılan fonksiyonların olduğu `TaylanFunctions.jl`
+
+Uygulamanın sizde de çalışması için `main.jl`deki 1. ve 4. satırları kendi bilgisayarınızdaki dosya yoluna göre düzeltmeniz gerekmektedir.
+
+### `Main.ln`
+
+Burası 100.000 adet örnek veriden oluşan kısmı dosyadan okuduğum ve sabit değerleri girdiğim bölüm
+
+``` Julia
+# f = open("E:\\_LESSONS\\_servis_sistemleri\\proje\\smallinput.txt")
+f = open("E:\\_LESSONS\\_servis_sistemleri\\proje\\input.txt")
+
+lines = readlines(f)
+
+infoLine = split(lines[1], " ")
+
+numberOfCities       = parse(Int64,   infoLine[1])
+blimpCost            = parse(Float64, infoLine[2]) # per mile
+blimpFactorOfDecline = parse(Float64, infoLine[3])
+travelCost           = 1
+```
+
+Bu kısım ise okuduğum verileri kullanılabilir hale getirip `cities` matrisine aktardığım kısım.
+
+Matris şehir sayısı derinliğinde ve 5 genişliğindedir.
+
+1. sütun  şehirlere numara verdiğim kısım. (İleride sıralama yaptığım zaman kaybolmaması için)
+
+2. ve 3. sütun  şehir koordinatları için
+
+4. sütun şehirte bir blimps sattığımız zaman kazanacağımız paranın miktarı
+
+5. sütun x,y koordinatından şehrin merkezini hesaplayıp eklediğim kısım.
+
+``` Julia
+cities = eye(numberOfCities, 5) # x, y, blimp ücreti, merkeze uzaklik
+for i=1:numberOfCities
+    city = split(lines[i+1], " ")
+    cities[i, 1] = i # sehirlere numara vermek icin
+    cities[i, 2] = parse(Float64, city[1,1]) # x
+    cities[i, 3] = parse(Float64, city[2,1]) # y
+    cities[i, 4] = parse(Float64, city[3,1]) # blimp ücreti
+    cities[i, 5] = distance(cities[i,1], cities[i,2]) # merkeze olan uzaklik
+end
+
+```
+
+Bu satırda şehirleri merkeze olan mesafelerine göre sıralama yaptırıyorum sortrows fonksiyonu kullanarak
+```Julia
+sortedCities = sortrows(cities, by=x->(x[5]))
+```
+
+Burada ise `decline`, `cost`, `profit`'i hesaplayıp karımız 0 dan büyük olduğu sürece yeni karı hesaplayıp `totalProfit` değişkeline aktarıyorum, karımız `0`dan büyük olduğu sürece ekleyip, `decline` miktarı `0` olmadığı sürece hesaplatıyorum, `decline` 0 olduğu zaman şehirden alacağımız para kesin 0 olacağı için orada `break` edip döngüyü sonlandırıyorum.
+``` Julia
+totalProfit = 0
+decline = blimpFactorOfDecline
+cityNumberList = []
+
+for i=1:numberOfCities
+    decline = CalculateDecline(decline, numberOfCities, i)
+    cost    = CalculateCost(sortedCities[i, 5], blimpCost, travelCost)
+    profit  = CalculateProfit(cost, sortedCities[i, 4], decline)
+    cityNumber = sortedCities[i, 1]
+    if profit > 0
+        totalProfit += profit
+        push!(cityNumberList, sortedCities[i, 1])
+    end
+    if decline == 0.0
+        break
+    end
+end
+
+```
+
+
+Aşağıdaki kodda ise elde ettiğim sonuçları ekrana yazdırıyorum.
+``` Julia
+println("visited cities :")
+println(cityNumberList)
+visitedCityCount = length(cityNumberList)
+println("visited city count : $visitedCityCount")
+println("total profit       : $totalProfit")
+println("final decline      : $decline")
+```
+
+
+
+
+
+
+
+
 #IENG 418 - SERVİS SİSTEMLERİ
 
 ## Dönem Projesi Raporu - Ara Sınav
